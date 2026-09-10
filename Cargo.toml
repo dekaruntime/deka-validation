@@ -1,22 +1,26 @@
 [package]
-name = "tana-validation"
-version = "0.1.1"
+name = "deka-validation"
+version = "0.2.0"
 edition = "2021"
-authors = ["Tana Network"]
-description = "Shared validation logic for Tana smart contracts with WASM support"
+authors = ["Sami Fouad"]
+description = "Validation and error formatting shared by the deka runtime and the dsc compiler"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/tananetwork/tana-validation"
-keywords = ["tana", "blockchain", "validation", "wasm"]
-categories = ["wasm", "development-tools"]
+repository = "https://github.com/dekaruntime/deka-validation"
+keywords = ["deka", "dsc", "validation", "diagnostics", "wasm"]
+categories = ["command-line-interface", "development-tools"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-wasm-bindgen = "0.2"
+wasm-bindgen = { version = "0.2", optional = true }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"
+
+[features]
+default = []
+wasm = ["dep:wasm-bindgen"]
 
 [profile.release]
 # Optimize for size when building WASM
