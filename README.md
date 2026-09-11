@@ -1,53 +1,81 @@
-# tana-validation
+# deka-validation
 
-shared validation logic for Tana smart contracts with WebAssembly support.
+Shared validation and error formatting logic for the Deka runtime and the `dsc` compiler.
 
-## overview
+## Overview
 
-tana-validation provides error formatting and validation utilities that work across both Rust and TypeScript environments. by writing core logic once in Rust and compiling to WebAssembly, the library ensures consistent behavior everywhere.
+`deka-validation` provides the error formatting used across Deka's Rust codebases so
+diagnostics look and behave identically wherever they are produced. It compiles as a
+native Rust crate and, with the `wasm` feature, to WebAssembly for browser and Bun/Node
+tooling (the deka.gg playground, CLI helpers).
 
-## how it works
-
-the library exports a single error formatting function that produces Rust/Gleam-style error messages with precise source locations. whether validation runs in the native Rust runtime or the browser-based playground, users see identical, helpful error output.
-
-### error format
+## Error format
 
 ```
 Validation Error
-Invalid Import
+❌ Invalid Import
 
-  contract.ts:1:26
-  
-  1  import { console } from 'tana/invalid';
-                              ^^^^^^^^^^^^ module 'tana/invalid' not found
-
-  help: available modules: tana/core, tana/kv
+    ┌─ handler.ts:1:26
+    │
+  1 │ import { serve } from 'deka/invalid';
+    │                          ^^^^^^^^^^^^ Module 'deka/invalid' not found
+    │
+    = help: Available modules: deka, deka/router, deka/sqlite
+    │
+    └─
 ```
 
-### dual compilation
+## Usage
 
-the same Rust code compiles to:
+### Rust
 
-- **native binary** - used by tana-runtime and tana-edge
-- **WebAssembly** - used by the playground and CLI tools
+```toml
+[dependencies]
+deka-validation = "0.2"
+```
 
-this eliminates the possibility of validation behavior diverging between development and production environments.
+```rust
+use deka_validation::format_validation_error;
 
-## architecture
+let error = format_validation_error(
+    "import { serve } from 'deka/invalid';",
+    "handler.ts",
+    "Invalid Import",
+    1,
+    26,
+    "Module 'deka/invalid' not found",
+    "Available modules: deka, deka/router, deka/sqlite",
+    12,
+);
 
-written in Rust with wasm-pack for WebAssembly compilation. the library has zero dependencies beyond the standard library, keeping bundle size minimal (~21KB WASM).
+println!("{}", error);
+```
 
-### type definitions
+### WebAssembly
 
-TypeScript type definitions are generated automatically during the WASM build process, providing full type safety for JavaScript consumers.
+```bash
+cargo build --release --target wasm32-unknown-unknown --features wasm
+```
 
-## integration
+Enable the `wasm` feature to build a `format_validation_error` binding usable from
+JavaScript/TypeScript via `wasm-bindgen`.
 
-tana-validation is used by:
+## Used by
 
-- **tana-runtime** - validates contracts before on-chain execution
-- **tana-edge** - validates contracts before HTTP handler execution
-- **playground** - validates contracts in the browser before deployment
-- **CLI** - validates contracts during local development
+- **deka runtime** (`dekaruntime/deka`) — native Rust, validates PHPX/DekaScript source
+- **dsc** (`dekaruntime/dsc`) — the DekaScript compiler
+- **deka.gg playground** — WASM build, browser-side validation
 
-all validation errors look the same regardless of where they originate, providing a consistent developer experience.
+This crate is the single source of truth for that error formatting. The deka and dsc
+repositories consume it as a published `deka-validation` crates.io dependency rather than
+vendoring a copy — changes land here first.
+
+## Development
+
+```bash
+cargo test
+```
+
+## License
+
+Licensed under Apache-2.0. See [LICENSE](./LICENSE).

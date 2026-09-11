@@ -1,6 +1,5 @@
 /target
 /pkg
-Cargo.lock
 *.wasm
 *.log
 .DS_Store
